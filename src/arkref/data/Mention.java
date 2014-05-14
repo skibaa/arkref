@@ -81,7 +81,7 @@ public class Mention implements Serializable{
 		String yield = res.yield().toString();
 		
 		if(yield.equals("'s")){
-			Tree copy = node.deeperCopy();
+			Tree copy = node.deepCopy();
 			List<Pair<TregexPattern, TsurgeonPattern>> ops = new ArrayList<Pair<TregexPattern, TsurgeonPattern>>();
 			List<TsurgeonPattern> ps = new ArrayList<TsurgeonPattern>();
 			TregexPattern matchPattern = TregexPatternFactory.getPattern("POS=pos");

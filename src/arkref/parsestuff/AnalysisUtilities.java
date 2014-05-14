@@ -8,6 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import edu.stanford.nlp.process.PTBTokenizer;
+import edu.stanford.nlp.process.Tokenizer;
+import edu.stanford.nlp.process.TokenizerFactory;
 import org.apache.commons.lang.StringUtils;
 
 import arkref.analysis.ARKref;
@@ -42,7 +45,7 @@ public class AnalysisUtilities {
 	private AnalysisUtilities(){
 		parser = null;
 		sst = null;
-		dp = new DocumentPreprocessor(false);
+//		dp = new DocumentPreprocessor(false);
 		
 		
 //		try{
@@ -154,10 +157,14 @@ public class AnalysisUtilities {
 		}
 		return Pattern.compile(Pattern.quote(tok));
 	}
-	
+
+    TokenizerFactory tokenizerFactory = PTBTokenizer.factory();
+
 	public String[] stanfordTokenize(String str) {
-		List<Word> wordToks = AnalysisUtilities.getInstance().dp.getWordsFromString(str);
-		String[] tokens = new String[wordToks.size()];
+        Tokenizer tokenizer = tokenizerFactory.getTokenizer(new BufferedReader(new StringReader(str)));
+		List<Word> wordToks = tokenizer.tokenize();
+
+        String[] tokens = new String[wordToks.size()];
 		for (int i=0; i < wordToks.size(); i++)
 			tokens[i] = wordToks.get(i).value();
 		return tokens;
@@ -183,17 +190,18 @@ public class AnalysisUtilities {
 		String sentence;
 		StringReader reader = new StringReader(cleanupDocument(document).text);
 		
-		List<List<? extends HasWord>> sentences = new ArrayList<List<? extends HasWord>>();
-		Iterator<List<? extends HasWord>> iter1 ;
+		//List<List<? extends HasWord>> sentences = new ArrayList<List<? extends HasWord>>();
+		Iterator<List<HasWord>> iter1 = null;
 		Iterator<? extends HasWord> iter2;
 		
 		try{
-			sentences = dp.getSentencesFromText(reader);
+			//sentences = new DocumentPreprocessor(reader).iterator();
+            iter1 = new DocumentPreprocessor(reader).iterator();
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 		
-		iter1 = sentences.iterator();
+		//iter1 = sentences.iterator();
 		while(iter1.hasNext()){
 			iter2 = iter1.next().iterator();
 			sentence = "";
@@ -249,7 +257,7 @@ public class AnalysisUtilities {
 	}
 	
 	public Double getLastParseScoreNormalizedByLength() {
-		double length = lastParse.yield().length();
+		double length = lastParse.yield().size();
 		double res = lastParseScore;
 		if(length <= 0){
 			res = 0.0;
@@ -314,26 +322,28 @@ public class AnalysisUtilities {
 		if (parser == null) {
 			if(DEBUG) System.err.println("Could not connect to parser server.  Loading parser...");
 			try {
-				Options op = new Options();
-				String serializedInputFileOrUrl = ARKref.getProperties().getProperty("parserGrammarFile", "lib/englishPCFG.ser.gz");
-				parser = new LexicalizedParser(serializedInputFileOrUrl, op);
+				//Options op = new Options();
+				//String serializedInputFileOrUrl = ARKref.getProperties().getProperty("parserGrammarFile", "lib/englishPCFG.ser.gz");
+				parser = LexicalizedParser.loadModel();
 				int maxLength = new Integer(ARKref.getProperties().getProperty("parserMaxLength", "40")).intValue();
-				parser.setMaxLength(maxLength);
 				parser.setOptionFlags("-outputFormat", "oneline");
+                parser.setOptionFlags("-maxLength", Integer.toString(maxLength));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 
 		try{
-			if (parser.parse(sentence)) {
-				lastParse = parser.getBestParse();
-				lastParseScore = parser.getPCFGScore();
+            Tree parseRes = parser.parse(sentence);
+			if (parseRes != null) {
+				lastParse = parser.lexicalizedParserQuery().getBestParse();
+				lastParseScore = parser.lexicalizedParserQuery().getPCFGScore();
 				TreePrint tp = new TreePrint("penn","",new PennTreebankLanguagePack());
 				StringWriter sb = new StringWriter();
 				pw = new PrintWriter(sb);
 				tp.printTree(lastParse, pw);
 				pw.flush();
+                //is it same as parseRes?
 				lastParse = readTreeFromString(sb.getBuffer().toString());
 						
 				return new ParseResult(true, lastParse, lastParseScore);
@@ -512,7 +522,7 @@ public class AnalysisUtilities {
 
 	
 	public static String getCleanedUpYield(Tree inputTree){
-		Tree copyTree = inputTree.deeperCopy();
+		Tree copyTree = inputTree.deepCopy();
 
 		if(DEBUG)System.err.println(copyTree.toString());
 
@@ -648,5 +658,5 @@ public class AnalysisUtilities {
 	private PennTreebankLanguagePack tlp;
 	private double lastParseScore;
 	private Tree lastParse;
-	public DocumentPreprocessor dp;
+	//public DocumentPreprocessor dp;
 }

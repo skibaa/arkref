@@ -156,7 +156,7 @@ public class Resolve {
 			return null;
 		}
 		
-		int index = parent.indexOf(node);
+		int index = parent.objectIndexOf(node);
 		if(index+1 >= parent.numChildren()){
 			return null;
 		}
@@ -232,7 +232,7 @@ public class Resolve {
 			return false;
 		}else if(!parent.getChild(1).label().value().equals(",")){
 			return false;
-		}else if(parent.indexOf(node) != 2){
+		}else if(parent.objectIndexOf(node) != 2){
 			return false;
 		}
 	

@@ -84,12 +84,12 @@ public class StanfordParserServer  {
 			System.exit(0);
 		}
 		try {
-			lp = new LexicalizedParser(serializedInputFileOrUrl, op);
+			lp = LexicalizedParser.loadModel(serializedInputFileOrUrl, op);
 		} catch (IllegalArgumentException e) {
 			System.err.println("Error loading parser, exiting...");
 			System.exit(0);
 		}
-		lp.setMaxLength(maxLength);
+		lp.setOptionFlags("-maxLength", Integer.toString(maxLength));
 		lp.setOptionFlags("-outputFormat", "oneline");
 
 		TreePrint tp;
@@ -136,7 +136,7 @@ public class StanfordParserServer  {
 
 
 					//OUTPUT RESULT
-					Tree bestParse = lp.getBestParse();
+					Tree bestParse = lp.lexicalizedParserQuery().getBestParse();
 					if(markHeadNodes){
 						tp = new TreePrint("penn","markHeadNodes",new PennTreebankLanguagePack());
 					}else{
@@ -144,7 +144,7 @@ public class StanfordParserServer  {
 					}
 					tp.printTree(bestParse, bufWriter);
 					outputWriter.println(buf.toString().replaceAll("\\s+", " "));
-					outputWriter.println(lp.getPCFGScore());
+					outputWriter.println(lp.lexicalizedParserQuery().getPCFGScore());
 					//String output = bestParse.toString();
 					//outputWriter.println(output);
 					//System.err.println("sent: " + output);

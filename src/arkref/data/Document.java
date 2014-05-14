@@ -208,7 +208,7 @@ public class Document implements Serializable{
 			Tree parentNP = matcher.getNode("parentnp");
 			Tree pro = matcher.getNode("pro");
 			Tree newNP = factory.newTreeNode("NP", new ArrayList<Tree>());
-			int index = parentNP.indexOf(pro);
+			int index = parentNP.objectIndexOf(pro);
 
 			newNP.addChild(pro);
 			parentNP.removeChild(index);
@@ -231,7 +231,7 @@ public class Document implements Serializable{
 			Tree tmpTree;
 			
 			newNode = factory.newTreeNode("NP", new ArrayList<Tree>());
-			int i = parentNP.indexOf(roleNP);
+			int i = parentNP.objectIndexOf(roleNP);
 			while(i>=0){
 				tmpTree = parentNP.getChild(i);
 				if(!tmpTree.label().value().matches("^NN|NNS|DT|JJ|ADVP$")){
